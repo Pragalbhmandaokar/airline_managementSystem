@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography;
 using System.Data.SqlClient;
 using System.Data;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
 
 namespace airline_backend.Controllers
 {
@@ -22,21 +25,32 @@ namespace airline_backend.Controllers
 
         public async Task<ActionResult<models.Login>> Register(models.UserModel request)
         {
-            CreatePasswordHash(request.password, out byte[] passwordHash, out byte[] passwordSalt);
+            //CreatePasswordHash(request.password, out byte[] passwordHash, out byte[] passwordSalt);
 
-            login.Username = request.username;
-            login.PasswordHash = passwordHash;
-            login.PasswordSalt = passwordSalt;
+            login.Username =  request.username;
+            login.Password = request.password;
+           
+            try {
+                string sqlDataSource = _configuration.GetConnectionString("airlineAppCon");
+                SqlConnection myconn = new SqlConnection(sqlDataSource);
+                string query = @"INSERT INTO [users] (username,password) values(" +"'"+ request.username + "'"+ "," +"'"+ request.password + "'"+")";
+                myconn.Open();
+                SqlCommand cmd1 = new SqlCommand(query, myconn);
+                cmd1.ExecuteNonQuery();
+                myconn.Close();
+                return Ok("Register Successful");
+            }
+            catch(Exception e)
+            {
+                return BadRequest("Registration Error" + e);
+            }
             
-            //string query = @'INSERT INTO [user] (username,password) values([]'
-
-            return Ok(login);
         }
 
         [HttpGet]
         public JsonResult Get()
         {
-            string query = @"select * from [user]";
+            string query = @"select * from [users]";
             DataTable table = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("airlineAppCon");
             SqlDataReader myReader;
@@ -47,12 +61,10 @@ namespace airline_backend.Controllers
                 {
                     myReader = myCommand.ExecuteReader();
                     table.Load(myReader);
-
                     myReader.Close();
                     myconn.Close();
                 }
             }
-
             return new JsonResult(table);
         }
         private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
@@ -63,29 +75,45 @@ namespace airline_backend.Controllers
                 passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
             }
         }
-
+      
         [HttpPost("login")]
         public async Task<ActionResult<String>> Login(models.UserModel request)
         {
-            if(login.Username != request.username)
+            string query = @"select * from [users] where username="+"'"+request.username+"'";
+            DataTable table = new DataTable();
+            string sqlDataSource = _configuration.GetConnectionString("airlineAppCon");
+            SqlDataReader myReader;
+            using (SqlConnection myconn = new SqlConnection(sqlDataSource))
+            {
+                myconn.Open();
+                using (SqlCommand myCommand = new SqlCommand(query, myconn))
+                {
+                    myReader = myCommand.ExecuteReader();
+                    table.Load(myReader);
+                    myReader.Close();
+                    myconn.Close();
+                }
+            }
+            if(table.Rows.Count > 0){ 
+                if (verifyPasswordHash(request.password, table.Rows[0]["password"].ToString()))
+                {
+              
+                    return Ok("Login successful"); 
+                }
+                return BadRequest("Wrong password, Try again");
+            }
+            else
             {
                 return BadRequest("User not found.");
             }
-              
-            if (!verifyPasswordHash(request.password, login.PasswordHash, login.PasswordSalt))
-            {
-                return BadRequest("Wrong password, Try again");
-            }
-            return Ok("Login successful");
         }
 
-        private bool verifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt)
-
-        {
-            using (var hmac = new HMACSHA512(passwordSalt)) {
-                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-                return computedHash.SequenceEqual(passwordHash);
+        private bool verifyPasswordHash(string password, string originalPassword){
+            if(password == originalPassword)
+            {
+                return true;
             }
+            return false;
         }
     }
 }
