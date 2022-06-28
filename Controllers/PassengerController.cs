@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using airline_backend.database.Entity;
+using airline_backend.models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 
@@ -8,25 +10,33 @@ namespace airline_backend.Controllers
     [ApiController]
     public class PassengerController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
-        public PassengerController(IConfiguration configuration)
+        databaseController db;
+        public PassengerController()
         {
-            _configuration = configuration;
+            db = new databaseController();
+        }
+
+        [HttpGet]
+        public IEnumerable<passenger> Get()
+        {
+            return db.passengers.ToList();
         }
         [HttpPost("AddPassenger")]
-        public async Task<ActionResult<models.Login>> Register(models.UserModel request)
+        public async Task<ActionResult<passenger>> Register(passenger request)
         {
-            
+            var get_user = db.passengers.FirstOrDefault(p => p.panNumber == request.panNumber);
             try
             {
-                string sqlDataSource = _configuration.GetConnectionString("airlineAppCon");
-                SqlConnection myconn = new SqlConnection(sqlDataSource);
-                string query = @"INSERT INTO [passenger] (username,password) values(" + "'" + request.username + "'" + "," + "'" + request.password + "'" + ")";
-                myconn.Open();
-                SqlCommand cmd1 = new SqlCommand(query, myconn);
-                cmd1.ExecuteNonQuery();
-                myconn.Close();
-                return Ok("Register Successful");
+                if (get_user == null)
+                {
+                    db.passengers.Add(request);
+                    db.SaveChanges();
+                    return Ok("Register Successful");
+                }
+                else
+                {
+                    return Ok(new JsonResult( get_user));
+                }
             }
             catch (Exception e)
             {
@@ -34,6 +44,25 @@ namespace airline_backend.Controllers
             }
         }
 
-       
+        [HttpGet("SearchPassenger")]
+        public async Task<ActionResult<passenger>> SearchPassengerByPanCard([FromBody] string panCard)
+        {
+            var get_user = db.passengers.FirstOrDefault(p => p.panNumber == panCard);
+            try
+            {
+                if (get_user == null)
+                {
+                    return Ok("passenger not found");
+                }
+                else
+                {
+                    return Ok(get_user);
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest("Registration Error" + e);
+            }
+        }
     }
 }

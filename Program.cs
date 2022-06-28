@@ -14,8 +14,10 @@ builder.Services.AddControllers()
     .AddXmlSerializerFormatters();
 builder.Services.AddControllers()
     .AddNewtonsoftJson();
+
 var app = builder.Build();
 
+app.UseCors(options => options.WithOrigins("http://localhost:3000").AllowAnyMethod().AllowAnyHeader());
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

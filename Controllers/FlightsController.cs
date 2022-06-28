@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using airline_backend.database.Entity;
+using airline_backend.models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Data.SqlClient;
@@ -9,30 +11,60 @@ namespace airline_backend.Controllers
     [ApiController]
     public class FlightsController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
-        public FlightsController(IConfiguration configuration)
+        databaseController db;
+        public FlightsController()
         {
-            _configuration = configuration;
+            db = new databaseController();
         }
+
         [HttpGet]
-        public JsonResult Get()
+        public IActionResult Get()
         {
-            string query = @"select * from [flight]";
-            DataTable table = new DataTable();
-            string sqlDataSource = _configuration.GetConnectionString("airlineAppCon");
-            SqlDataReader myReader;
-            using (SqlConnection myconn = new SqlConnection(sqlDataSource))
-            {
-                myconn.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myconn))
-                {
-                    myReader = myCommand.ExecuteReader();
-                    table.Load(myReader);
-                    myReader.Close();
-                    myconn.Close();
-                }
-            }
-            return new JsonResult(table);
+            return new JsonResult(db.flights.ToList());
         }
+
+        [HttpPost("flightRegister")]
+        public async Task<ActionResult<Flights>> Register(Flights request)
+        {
+            try
+            {
+                db.flights.Add(request);
+                db.SaveChanges();
+                return Ok("Flight added");
+            }
+            catch (Exception e)
+            {
+                return BadRequest("Registration Error" + e);
+            }
+        }
+
+        [HttpPost("searchFlightByPlace")]
+        public async Task<ActionResult<Flights>> getflights(string destinationPlace,string sourcePlace)
+        {
+            try
+            {
+                var flightsSearch = db.flights.Where(p => p.destinationPlace == destinationPlace && p.sourcePlace == sourcePlace);
+                return new JsonResult(flightsSearch.ToList());
+            }
+            catch (Exception e)
+            {
+                return BadRequest("Registration Error" + e);
+            }
+        }
+
+        [HttpPost("searchFlight")]
+        public async Task<ActionResult<Flights>> getflights(int flightId)
+        {
+            try
+            {
+                var flightsSearch = db.flights.Where(p => p.FlightsId == flightId);
+                return new JsonResult(flightsSearch.ToList()); 
+            }
+            catch (Exception e)
+            {
+                return BadRequest("Registration Error" + e);
+            }
+        }
+
     }
 }
