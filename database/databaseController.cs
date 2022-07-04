@@ -7,7 +7,7 @@ namespace airline_backend.models
     {
         public DbSet<UserModel> users { get; set; }
 
-        public DbSet<Tickets> tickets { get; set; }
+        public DbSet<Ticket> ticket { get; set; }
         public DbSet<Flights> flights { get; set; }
         public DbSet<passenger> passengers { get; set; }
 

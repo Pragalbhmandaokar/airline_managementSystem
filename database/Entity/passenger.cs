@@ -8,6 +8,6 @@
         public string ticketNumberForFlight { get; set; }
         public string panNumber { get; set; }
 
-
+        public string userName { get; set; } 
     }
 }

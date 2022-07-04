@@ -27,6 +27,8 @@ namespace airline_backend.Controllers
             return new JsonResult(db.users.ToList());
         }
 
+        //localhost:port/api/auth/register
+
         [HttpPost("register")]
         public async Task<ActionResult<UserModel>> Register(UserModel request)
         {

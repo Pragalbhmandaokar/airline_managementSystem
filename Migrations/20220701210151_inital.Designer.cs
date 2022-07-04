@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using airline_backend.models;
 
@@ -11,9 +12,10 @@ using airline_backend.models;
 namespace airline_backend.Migrations
 {
     [DbContext(typeof(databaseController))]
-    partial class databaseControllerModelSnapshot : ModelSnapshot
+    [Migration("20220701210151_inital")]
+    partial class inital
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

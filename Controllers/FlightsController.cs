@@ -23,6 +23,8 @@ namespace airline_backend.Controllers
             return new JsonResult(db.flights.ToList());
         }
 
+        //{userid: "1",flightName:"name"}
+
         [HttpPost("flightRegister")]
         public async Task<ActionResult<Flights>> Register(Flights request)
         {

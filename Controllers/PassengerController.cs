@@ -30,6 +30,7 @@ namespace airline_backend.Controllers
                 if (get_user == null)
                 {
                     db.passengers.Add(request);
+                  
                     db.SaveChanges();
                     return Ok("Register Successful");
                 }
